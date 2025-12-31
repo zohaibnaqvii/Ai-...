@@ -1,0 +1,8 @@
+{
+  "name": "ZOHAIB X NO 18",
+  "description": "A private, local-first AI chat application with unique personas, high conversational freedom, and image generation capabilities.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
