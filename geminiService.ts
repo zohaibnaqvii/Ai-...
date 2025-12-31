@@ -1,11 +1,7 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { Message, CharacterId } from "./types";
 import { CHARACTERS } from "./constants";
-
-const getAIClient = () => {
-  return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
-};
 
 export const generateResponse = async (
   characterId: CharacterId,
@@ -13,68 +9,66 @@ export const generateResponse = async (
   userInput: string,
   config: { useImageGen: boolean; useLiveSearch: boolean }
 ) => {
-  const ai = getAIClient();
+  // Always create a fresh instance to ensure the latest API key is used
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
   const char = CHARACTERS.find(c => c.id === characterId)!;
 
   // Check for image generation request
-  const imageRequestKeywords = ['generate image', 'show me', 'create a picture', 'draw', 'tasveer', 'image banao'];
+  const imageRequestKeywords = ['generate image', 'draw', 'picture', 'tasveer', 'image banao', 'bana k do'];
   const isImageRequest = config.useImageGen && imageRequestKeywords.some(keyword => userInput.toLowerCase().includes(keyword));
 
   if (isImageRequest) {
     try {
       const imgResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
-        contents: {
-          parts: [{ text: userInput }]
-        },
-        config: {
-            imageConfig: {
-                aspectRatio: "1:1"
-            }
-        }
+        contents: { parts: [{ text: userInput }] },
+        config: { imageConfig: { aspectRatio: "1:1" } }
       });
 
       let imageData = '';
-      for (const part of imgResponse.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          imageData = `data:image/png;base64,${part.inlineData.data}`;
+      const candidate = imgResponse.candidates?.[0];
+      if (candidate?.content?.parts) {
+        for (const part of candidate.content.parts) {
+          if (part.inlineData) {
+            imageData = `data:image/png;base64,${part.inlineData.data}`;
+            break;
+          }
         }
       }
       
-      return { 
-        text: "Here is what I created for you.", 
-        imageUrl: imageData 
-      };
+      if (imageData) {
+        return { text: "Le bhai, teri tasveer tayyar ha.", imageUrl: imageData };
+      }
     } catch (error) {
-      console.error("Image generation failed:", error);
-      // Fallback to text if image fails
+      console.error("Img Gen Error:", error);
     }
   }
 
-  // Regular Chat - Using gemini-3-flash-preview for maximum speed
-  const contents = history.map(msg => ({
+  // Map history to Gemini format, filtering out any corrupt entries
+  // Limit history to last 10 messages for performance and speed
+  const recentHistory = history.slice(-10).map(msg => ({
     role: msg.role === 'user' ? 'user' : 'model',
     parts: [{ text: msg.content }]
   }));
-  
-  // Add current input
-  contents.push({ role: 'user', parts: [{ text: userInput }] });
 
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: contents,
+      contents: recentHistory,
       config: {
         systemInstruction: char.systemInstruction,
         tools: config.useLiveSearch ? [{ googleSearch: {} }] : undefined,
         temperature: 0.9,
-        thinkingConfig: { thinkingBudget: 0 } // Disable thinking for fastest response
       }
     });
 
-    return { text: response.text || "...", imageUrl: undefined };
+    const text = response.text || "Kuch samajh nahi aya, dubara bol.";
+    return { text, imageUrl: undefined };
   } catch (error) {
-    console.error("Chat generation failed:", error);
-    return { text: "Sorry, something went wrong. Try again.", imageUrl: undefined };
+    console.error("API Error:", error);
+    return { 
+      text: "Bhai connection me masla ha ya API key check kr le. (Something went wrong)", 
+      imageUrl: undefined 
+    };
   }
 };

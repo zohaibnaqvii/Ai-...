@@ -17,9 +17,9 @@ import {
   Trash2, 
   X, 
   Image as ImageIcon,
-  ShieldAlert,
   Zap,
-  LayoutGrid
+  LayoutGrid,
+  ChevronRight
 } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'zohaib_chats_v1';
@@ -37,7 +37,7 @@ const App: React.FC = () => {
     useImageGen: true,
     useLiveSearch: true,
     theme: 'dark',
-    anonymousId: 'Z-X-' + Math.random().toString(36).substring(2, 7).toUpperCase()
+    anonymousId: 'Z-X-' + Math.random().toString(36).substring(2, 6).toUpperCase()
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -79,7 +79,7 @@ const App: React.FC = () => {
     const newSession: ChatSession = {
       id: newId,
       characterId: charId,
-      title: 'New Session',
+      title: 'Naya Daur',
       messages: [{ id: 'init', role: 'model', content: FIRST_MESSAGE, timestamp: Date.now() }],
       lastUpdated: Date.now()
     };
@@ -104,9 +104,10 @@ const App: React.FC = () => {
       ...s,
       messages: [...s.messages, userMsg],
       lastUpdated: Date.now(),
-      title: s.messages.length <= 1 ? inputValue.substring(0, 25) : s.title
+      title: s.messages.length <= 1 ? inputValue.substring(0, 20) : s.title
     } : s));
 
+    const currentInput = inputValue;
     setInputValue('');
     setIsTyping(true);
 
@@ -114,7 +115,7 @@ const App: React.FC = () => {
     const response = await generateResponse(
       session.characterId, 
       session.messages.concat(userMsg), 
-      userMsg.content,
+      currentInput,
       { useImageGen: settings.useImageGen, useLiveSearch: settings.useLiveSearch }
     );
 
@@ -145,48 +146,53 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#020617] text-slate-100 selection:bg-cyan-500/30">
-      {/* Dynamic Header */}
-      <header className="h-16 border-b border-slate-800/50 glass flex items-center justify-between px-6 z-50">
-        <div className="flex items-center gap-4">
-          <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-slate-800/50 rounded-lg lg:hidden transition-all">
-            <Menu size={22} className="text-cyan-400" />
+    <div className="h-screen flex flex-col bg-[#010409] text-slate-100 overflow-hidden font-sans">
+      {/* Navbar */}
+      <header className="h-14 shrink-0 border-b border-white/5 flex items-center justify-between px-4 sm:px-6 bg-[#010409]/80 backdrop-blur-xl z-[60]">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 hover:bg-white/5 rounded-full lg:hidden transition-all">
+            <Menu size={20} className="text-cyan-500" />
           </button>
           <div className="flex flex-col">
-            <h1 className="text-lg font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 uppercase italic">
+            <h1 className="text-base font-black italic tracking-tighter text-white uppercase leading-none">
               {APP_NAME}
             </h1>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="text-[9px] mono uppercase tracking-widest text-slate-500 font-bold">Encrypted Connection</span>
-            </div>
+            <span className="text-[8px] mono text-cyan-500/80 font-bold uppercase tracking-widest mt-0.5">Live Terminal</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button onClick={() => createNewChat(currentCharacterId)} className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 hover:bg-slate-700 rounded-full border border-slate-700 transition-all text-xs font-bold">
-            <Plus size={16} /> <span className="hidden sm:inline">New Chat</span>
+        <div className="flex items-center gap-1">
+          <button onClick={() => createNewChat(currentCharacterId)} className="p-2 hover:bg-white/5 rounded-full text-white">
+            <Plus size={20} />
           </button>
-          <button onClick={() => setIsSettingsOpen(true)} className="p-2 hover:bg-slate-800/50 rounded-full text-slate-400 hover:text-cyan-400 transition-all">
-            <Settings size={22} />
+          <button onClick={() => setIsSettingsOpen(true)} className="p-2 hover:bg-white/5 rounded-full text-slate-400">
+            <Settings size={20} />
           </button>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Modern Sidebar */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Mobile Sidebar Overlay */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar */}
         <aside className={`
-          fixed inset-y-0 left-0 z-[60] w-80 glass border-r border-slate-800/50 transform transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1)
+          fixed inset-y-0 left-0 z-[80] w-[280px] bg-[#0d1117] border-r border-white/5 transform transition-transform duration-300 ease-out
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:static
+          lg:translate-x-0 lg:static lg:z-0
         `}>
           <div className="flex flex-col h-full">
-            <div className="p-6 flex items-center justify-between">
-              <span className="font-black text-xl italic text-slate-400 tracking-tighter">ARCHIVE</span>
-              <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-slate-500"><X size={24}/></button>
+            <div className="p-6 flex items-center justify-between lg:hidden">
+              <span className="font-bold text-slate-400 text-xs tracking-widest uppercase">Memory Bank</span>
+              <button onClick={() => setIsSidebarOpen(false)} className="text-slate-500"><X size={20}/></button>
             </div>
             
-            <div className="flex-1 overflow-y-auto px-4 space-y-2">
+            <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
               {sessions.map(s => {
                 const char = CHARACTERS.find(c => c.id === s.characterId);
                 const isActive = activeSessionId === s.id;
@@ -194,43 +200,41 @@ const App: React.FC = () => {
                   <button
                     key={s.id}
                     onClick={() => { setActiveSessionId(s.id); setCurrentCharacterId(s.characterId); setIsSidebarOpen(false); }}
-                    className={`w-full group relative p-4 rounded-xl transition-all duration-300 border ${isActive ? 'bg-slate-800/50 border-cyan-500/50 glow-blue' : 'bg-transparent border-transparent hover:bg-slate-900/50'}`}
+                    className={`w-full group relative p-3 rounded-lg transition-all flex items-center gap-3 border ${isActive ? 'bg-white/5 border-white/10' : 'bg-transparent border-transparent hover:bg-white/5'}`}
                   >
-                    <div className="flex items-center gap-3">
-                      <img src={char?.avatar} className={`w-10 h-10 rounded-lg object-cover ring-2 ring-slate-800 ${isActive ? 'grayscale-0' : 'grayscale group-hover:grayscale-0'}`} />
-                      <div className="flex-1 min-w-0 text-left">
-                        <p className="text-sm font-bold truncate">{s.title}</p>
-                        <p className={`text-[10px] mono uppercase font-black tracking-tighter ${isActive ? 'text-cyan-400' : 'text-slate-600'}`}>{char?.name}</p>
-                      </div>
-                      <Trash2 
-                        size={16} 
-                        onClick={(e) => deleteSession(s.id, e)}
-                        className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-500 transition-all" 
-                      />
+                    <img src={char?.avatar} className={`w-8 h-8 rounded-md object-cover ring-1 ring-white/10 ${isActive ? 'grayscale-0' : 'grayscale group-hover:grayscale-0'}`} />
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-xs font-bold truncate text-slate-200">{s.title}</p>
+                      <p className="text-[9px] mono uppercase text-slate-500 font-bold">{char?.name}</p>
                     </div>
+                    <Trash2 
+                      size={14} 
+                      onClick={(e) => deleteSession(s.id, e)}
+                      className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-500 transition-all shrink-0" 
+                    />
                   </button>
                 );
               })}
             </div>
 
-            <div className="p-6 border-t border-slate-800/50 bg-slate-900/30">
-               <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-900 flex items-center justify-center shadow-lg shadow-cyan-900/20">
-                    <User size={24} className="text-white" />
+            <div className="p-4 border-t border-white/5 bg-[#010409]">
+               <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-600 flex items-center justify-center shadow-lg">
+                    <User size={16} className="text-white" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold">OPERATOR</span>
-                    <span className="text-[10px] mono text-cyan-500 font-bold tracking-widest">{settings.anonymousId}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Operator</span>
+                    <span className="text-[9px] mono text-cyan-400 font-bold">{settings.anonymousId}</span>
                   </div>
                </div>
             </div>
           </div>
         </aside>
 
-        <main className="flex-1 flex flex-col relative bg-[#020617]">
-          {/* Persona Switcher - The "Pawa" Bar */}
-          <div className="px-6 py-3 border-b border-slate-800/30 bg-slate-900/20 flex gap-4 overflow-x-auto no-scrollbar items-center">
-             <span className="text-[10px] mono text-slate-500 font-bold rotate-90 sm:rotate-0">PERSONA</span>
+        {/* Chat Content */}
+        <main className="flex-1 flex flex-col relative bg-[#010409]">
+          {/* Persona Bar */}
+          <div className="px-4 py-3 border-b border-white/5 bg-[#010409] flex gap-2 overflow-x-auto no-scrollbar items-center shrink-0">
              {CHARACTERS.map(char => (
                <button
                  key={char.id}
@@ -242,39 +246,40 @@ const App: React.FC = () => {
                    }
                    setCurrentCharacterId(char.id);
                  }}
-                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black tracking-tighter transition-all border
+                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight transition-all border shrink-0
                    ${currentCharacterId === char.id 
-                    ? `bg-${char.color}-500/10 border-${char.color}-500/50 text-${char.color}-400 ring-4 ring-${char.color}-500/5` 
-                    : 'bg-slate-800/30 border-transparent text-slate-500 hover:text-slate-300'}`}
+                    ? `bg-cyan-500/10 border-cyan-500/50 text-cyan-400` 
+                    : 'bg-white/5 border-transparent text-slate-500 hover:text-slate-300'}`}
                >
-                 <img src={char.avatar} className="w-4 h-4 rounded-full" />
-                 {char.name.toUpperCase()}
+                 <img src={char.avatar} className="w-3 h-3 rounded-full" />
+                 {char.name}
                </button>
              ))}
           </div>
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-8 scroll-smooth">
+          {/* Messages Area */}
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth pb-32">
             {activeSession?.messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-msg`}>
-                <div className={`flex gap-4 max-w-[90%] md:max-w-[75%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                  <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center border-2 
-                    ${msg.role === 'user' ? 'bg-cyan-600 border-cyan-400' : 'bg-slate-800 border-slate-700'}`}>
-                    {msg.role === 'user' ? <User size={20} /> : <img src={CHARACTERS.find(c => c.id === activeSession.characterId)?.avatar} className="rounded-lg" />}
+                <div className={`flex gap-3 max-w-[92%] sm:max-w-[80%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                  <div className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center ring-1 ring-white/10
+                    ${msg.role === 'user' ? 'bg-cyan-600' : 'bg-[#161b22]'}`}>
+                    {msg.role === 'user' ? <User size={14} /> : <img src={CHARACTERS.find(c => c.id === activeSession.characterId)?.avatar} className="rounded-md w-full h-full object-cover" />}
                   </div>
                   <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`px-5 py-4 rounded-2xl text-sm leading-relaxed shadow-xl
+                    <div className={`px-4 py-3 rounded-2xl text-[13px] leading-relaxed shadow-sm
                       ${msg.role === 'user' 
-                        ? 'bg-gradient-to-br from-cyan-600 to-blue-700 text-white rounded-tr-none' 
-                        : 'bg-slate-900/80 border border-slate-800 text-slate-100 rounded-tl-none'}`}
+                        ? 'bg-cyan-600 text-white rounded-tr-none' 
+                        : 'bg-[#161b22] border border-white/5 text-slate-200 rounded-tl-none'}`}
                     >
-                      <p className="whitespace-pre-wrap font-medium">{msg.content}</p>
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
                       {msg.imageUrl && (
-                        <div className="mt-4 rounded-xl overflow-hidden border-2 border-slate-700 glow-blue">
-                          <img src={msg.imageUrl} className="w-full h-auto" alt="AI Output" />
+                        <div className="mt-3 rounded-xl overflow-hidden border border-white/10">
+                          <img src={msg.imageUrl} className="w-full h-auto max-h-[300px] object-contain bg-black" alt="AI" />
                         </div>
                       )}
                     </div>
-                    <span className="text-[9px] mono text-slate-600 mt-2 font-black uppercase tracking-widest">
+                    <span className="text-[8px] mono text-slate-600 mt-1 uppercase font-bold px-1">
                       {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
@@ -282,96 +287,87 @@ const App: React.FC = () => {
               </div>
             ))}
             {isTyping && (
-              <div className="flex justify-start items-center gap-4 animate-pulse">
-                <div className="w-10 h-10 rounded-xl bg-slate-800 border-2 border-slate-700 flex items-center justify-center">
-                    <img src={CHARACTERS.find(c => c.id === currentCharacterId)?.avatar} className="rounded-lg opacity-50" />
+              <div className="flex justify-start items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#161b22] flex items-center justify-center animate-pulse">
+                    <img src={CHARACTERS.find(c => c.id === currentCharacterId)?.avatar} className="rounded-md opacity-40" />
                 </div>
-                <div className="h-10 px-6 flex items-center gap-1 bg-slate-900/50 rounded-2xl border border-slate-800">
-                  <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-bounce"></div>
-                  <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                  <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                <div className="flex gap-1 px-4 py-3 rounded-2xl bg-[#161b22]/50">
+                  <div className="w-1 h-1 bg-cyan-500 rounded-full animate-bounce"></div>
+                  <div className="w-1 h-1 bg-cyan-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                  <div className="w-1 h-1 bg-cyan-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Input Interface */}
-          <div className="p-6 bg-gradient-to-t from-slate-950 to-transparent">
-            <form onSubmit={handleSendMessage} className="max-w-5xl mx-auto flex items-end gap-3">
-              <div className="flex-1 relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-3xl blur opacity-10 group-focus-within:opacity-20 transition-all duration-500"></div>
+          {/* Bottom Fixed Area */}
+          <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-[#010409] via-[#010409] to-transparent">
+            <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto flex items-end gap-2">
+              <div className="flex-1 relative">
                 <textarea
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }}}
-                  placeholder={`Command ${CHARACTERS.find(c => c.id === currentCharacterId)?.name.toUpperCase()}...`}
+                  placeholder={`Command ${CHARACTERS.find(c => c.id === currentCharacterId)?.name}...`}
                   rows={1}
-                  className="relative w-full bg-slate-900 border border-slate-800 rounded-2xl pl-5 pr-14 py-4 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition-all resize-none min-h-[56px] max-h-48 text-sm font-medium"
+                  className="w-full bg-[#0d1117] border border-white/10 rounded-2xl pl-4 pr-10 py-3.5 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all resize-none min-h-[52px] max-h-32 text-sm"
                   onInput={(e) => {
                     const t = e.target as HTMLTextAreaElement;
                     t.style.height = 'auto';
-                    t.style.height = `${Math.min(t.scrollHeight, 192)}px`;
+                    t.style.height = `${Math.min(t.scrollHeight, 128)}px`;
                   }}
                 />
-                <div className="absolute right-4 bottom-4 flex items-center gap-2">
-                   <Zap size={18} className={`${isTyping ? 'text-cyan-500 animate-pulse' : 'text-slate-600'}`} />
+                <div className="absolute right-3 bottom-3.5">
+                   <Zap size={16} className={`${isTyping ? 'text-cyan-500 animate-pulse' : 'text-slate-600'}`} />
                 </div>
               </div>
               <button
                 type="submit"
                 disabled={!inputValue.trim() || isTyping}
-                className="h-[56px] w-[56px] flex items-center justify-center bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 rounded-2xl transition-all shadow-2xl shadow-cyan-900/40 shrink-0"
+                className="h-[52px] w-[52px] flex items-center justify-center bg-cyan-600 hover:bg-cyan-500 disabled:bg-white/5 disabled:text-slate-700 rounded-2xl transition-all shadow-lg shrink-0"
               >
-                <Send size={24} className={isTyping ? 'animate-ping' : ''} />
+                <Send size={20} />
               </button>
             </form>
           </div>
         </main>
       </div>
 
-      {/* Settings Panel */}
+      {/* Settings Modal */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden border-t-2 border-t-cyan-500">
-            <div className="p-8 flex items-center justify-between border-b border-slate-800">
-              <h2 className="text-2xl font-black italic tracking-tighter flex items-center gap-3 text-cyan-400">
-                <LayoutGrid size={28} /> CORE SETTINGS
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+          <div className="bg-[#0d1117] border border-white/10 rounded-3xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <h2 className="text-lg font-black italic tracking-tighter flex items-center gap-2 text-white uppercase">
+                <LayoutGrid size={20} className="text-cyan-500" /> Options
               </h2>
-              <button onClick={() => setIsSettingsOpen(false)} className="p-2 hover:bg-slate-800 rounded-full transition-all"><X size={24} /></button>
+              <button onClick={() => setIsSettingsOpen(false)} className="p-2 hover:bg-white/5 rounded-full"><X size={20} /></button>
             </div>
             
-            <div className="p-8 space-y-8">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl border border-slate-800/50">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center"><ImageIcon size={20} className="text-blue-400" /></div>
-                    <div>
-                      <p className="font-bold">IMAGINE MODE</p>
-                      <p className="text-[10px] mono text-slate-500">Auto-detect image prompts</p>
-                    </div>
-                  </div>
-                  <button onClick={() => setSettings(p => ({...p, useImageGen: !p.useImageGen}))} className={`w-14 h-7 rounded-full transition-all relative ${settings.useImageGen ? 'bg-cyan-600 shadow-lg shadow-cyan-600/30' : 'bg-slate-700'}`}>
-                    <div className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-md transition-all ${settings.useImageGen ? 'left-8' : 'left-1'}`} />
-                  </button>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                <div className="flex items-center gap-3">
+                  <ImageIcon size={18} className="text-blue-400" />
+                  <span className="text-xs font-bold uppercase tracking-tight">Image Gen</span>
                 </div>
-
-                <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl border border-slate-800/50">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center"><ShieldAlert size={20} className="text-green-400" /></div>
-                    <div>
-                      <p className="font-bold">LIVE INTELLIGENCE</p>
-                      <p className="text-[10px] mono text-slate-500">Web grounding via Google Search</p>
-                    </div>
-                  </div>
-                  <button onClick={() => setSettings(p => ({...p, useLiveSearch: !p.useLiveSearch}))} className={`w-14 h-7 rounded-full transition-all relative ${settings.useLiveSearch ? 'bg-cyan-600 shadow-lg shadow-cyan-600/30' : 'bg-slate-700'}`}>
-                    <div className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-md transition-all ${settings.useLiveSearch ? 'left-8' : 'left-1'}`} />
-                  </button>
-                </div>
+                <button onClick={() => setSettings(p => ({...p, useImageGen: !p.useImageGen}))} className={`w-10 h-5 rounded-full transition-all relative ${settings.useImageGen ? 'bg-cyan-600' : 'bg-slate-700'}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${settings.useImageGen ? 'left-5.5' : 'left-0.5'}`} />
+                </button>
               </div>
 
-              <div className="pt-6 border-t border-slate-800">
-                <button onClick={() => { if(confirm("Wipe all data?")) { setSessions([]); localStorage.removeItem(LOCAL_STORAGE_KEY); setIsSettingsOpen(false); createNewChat('zohaib'); }}} className="w-full flex items-center justify-center gap-3 p-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-2xl border border-red-500/30 transition-all font-black italic tracking-tighter">
-                  <Trash2 size={20} /> WIPE ALL MEMORY
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                <div className="flex items-center gap-3">
+                  <LayoutGrid size={18} className="text-green-400" />
+                  <span className="text-xs font-bold uppercase tracking-tight">Web Search</span>
+                </div>
+                <button onClick={() => setSettings(p => ({...p, useLiveSearch: !p.useLiveSearch}))} className={`w-10 h-5 rounded-full transition-all relative ${settings.useLiveSearch ? 'bg-cyan-600' : 'bg-slate-700'}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${settings.useLiveSearch ? 'left-5.5' : 'left-0.5'}`} />
+                </button>
+              </div>
+
+              <div className="pt-4">
+                <button onClick={() => { if(confirm("Sab uda doon?")) { setSessions([]); localStorage.removeItem(LOCAL_STORAGE_KEY); setIsSettingsOpen(false); createNewChat('zohaib'); }}} className="w-full flex items-center justify-center gap-2 p-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl border border-red-500/20 transition-all text-xs font-black uppercase tracking-widest">
+                  <Trash2 size={16} /> Wipe Memory
                 </button>
               </div>
             </div>
