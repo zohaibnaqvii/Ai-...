@@ -9,21 +9,14 @@ export const generateResponse = async (
   userInput: string,
   config: { useImageGen: boolean; useLiveSearch: boolean }
 ) => {
-  const apiKey = process.env.API_KEY;
-  
-  if (!apiKey || apiKey === '') {
-    return { 
-      text: "ERROR: Bhai API Key missing ha! Vercel Dashboard me 'API_KEY' name se environment variable add karo aur redeploy karo.", 
-      imageUrl: undefined 
-    };
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  // Always create a new instance right before the call to ensure the latest API key is used
+  // and strictly follow the named parameter initialization: { apiKey: ... }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const char = CHARACTERS.find(c => c.id === characterId)!;
 
-  // 1. Image Check
-  const triggers = ['bana', 'image', 'picture', 'draw', 'photo', 'tasveer'];
-  const wantsImage = config.useImageGen && triggers.some(t => userInput.toLowerCase().includes(t));
+  // 1. Image Generation Logic
+  const imgTriggers = ['bana', 'image', 'picture', 'tasveer', 'photo', 'drawing', 'draw'];
+  const wantsImage = config.useImageGen && imgTriggers.some(t => userInput.toLowerCase().includes(t));
 
   if (wantsImage) {
     try {
@@ -33,20 +26,23 @@ export const generateResponse = async (
         config: { imageConfig: { aspectRatio: "1:1" } }
       });
       
-      const part = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-      if (part?.inlineData) {
-        return { 
-          text: "Lo bhai, tasveer hazir ha.", 
-          imageUrl: `data:image/png;base64,${part.inlineData.data}` 
-        };
+      // Guidelines: Iterate through all parts to find the image part, do not assume index 0
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) {
+          return { 
+            text: "System response: Image generated successfully.", 
+            imageUrl: `data:image/png;base64,${part.inlineData.data}`,
+            groundingChunks: undefined
+          };
+        }
       }
     } catch (e: any) {
-      console.error("Img error:", e);
+      console.error("Image error", e);
     }
   }
 
-  // 2. Chat
-  const chatHistory = history.slice(-6).map(m => ({
+  // 2. Chat Logic
+  const chatHistory = history.slice(-10).map(m => ({
     role: m.role === 'user' ? 'user' : 'model',
     parts: [{ text: m.content }]
   }));
@@ -57,20 +53,34 @@ export const generateResponse = async (
       contents: chatHistory,
       config: {
         systemInstruction: char.systemInstruction,
+        // Google Search grounding setup
         tools: config.useLiveSearch ? [{ googleSearch: {} }] : undefined,
-        temperature: 0.9,
+        temperature: 0.8,
       }
     });
 
-    return { text: response.text || "Pata nahi kia hua, dubara pucho.", imageUrl: undefined };
+    return { 
+      // response.text is a getter, not a method
+      text: response.text || "Bhai, dimagh kaam nahi kar raha, dubara try karo.", 
+      imageUrl: undefined,
+      // Mandatory: Extract URLs/Chunks for grounding display
+      groundingChunks: response.candidates?.[0]?.groundingMetadata?.groundingChunks
+    };
   } catch (err: any) {
     console.error("Gemini Error:", err);
-    let msg = "Connection issue! Dubara try karo ya API key check karo.";
-    if (err.message?.includes("401") || err.message?.includes("API_KEY_INVALID")) {
-      msg = "API Key galat ha bhai! AI Studio se sahi key lo.";
-    } else if (err.message?.includes("429")) {
-      msg = "Thora ruk jao, limits cross ho rahi hain.";
+    
+    if (err.message?.includes("not found") || err.message?.includes("key")) {
+      return { 
+        text: "ERROR: Bhai API Key ka masla ha. Settings mein ja kar dobara connect karo ya check karo ke key active ha.", 
+        imageUrl: undefined,
+        groundingChunks: undefined
+      };
     }
-    return { text: msg, imageUrl: undefined };
+    
+    return { 
+      text: "Connection weak ha, ya API limit cross ho gayi ha. Thora ruk k try karo.", 
+      imageUrl: undefined,
+      groundingChunks: undefined
+    };
   }
 };

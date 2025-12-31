@@ -16,6 +16,8 @@ export interface Message {
   content: string;
   imageUrl?: string;
   timestamp: number;
+  // Support for search grounding chunks as required by guidelines
+  groundingChunks?: any[];
 }
 
 export interface ChatSession {
