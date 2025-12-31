@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ZOHAIB X NO 18</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -15,11 +15,12 @@
         }
         body {
             font-family: 'Space Grotesk', sans-serif;
-            background-color: #020617;
+            background-color: #010409;
             margin: 0;
             padding: 0;
             overflow: hidden;
             color: #f8fafc;
+            height: 100dvh;
         }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
@@ -30,19 +31,18 @@
             border-radius: 10px;
         }
         
-        .glow-blue { box-shadow: 0 0 15px rgba(0, 242, 255, 0.15); }
-        .glow-red { box-shadow: 0 0 15px rgba(255, 0, 85, 0.15); }
-        
         @keyframes slideIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-msg { animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-msg { animation: slideIn 0.25s ease-out forwards; }
 
-        .glass {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
     <script type="importmap">
@@ -59,9 +59,8 @@
 }
 </script>
 </head>
-<body class="bg-slate-950 text-slate-100">
+<body>
     <div id="root"></div>
-    <!-- THIS IS THE FIX FOR VERCEL BLANK PAGE -->
     <script type="module" src="./index.tsx"></script>
 </body>
 </html>
